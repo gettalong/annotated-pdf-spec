@@ -59,6 +59,7 @@ Most of things stated here are needed because many PDF writers don't create stan
   endobj
   ~~~
 
+
 ## 7.3.10 Indirect Objects
 
 * Handle no value between `obj` and `endobj`:
@@ -101,3 +102,89 @@ Most of things stated here are needed because many PDF writers don't create stan
   (asdfasdf
   endobj
   ~~~
+
+* Maybe treat indirect objects with offset 0 as `null` values
+
+
+## 7.5.2 File Header
+
+* Allow the PDF header to appear in the first 1024 bytes instead of the first line (recommended by Adobe):
+
+  ~~~
+  some junk here
+  as well as here
+
+  %PDF-1.7
+  ~~~
+
+
+## 7.5.4 Cross-Reference Table
+
+* Handle cross-reference entries having an end-of-line sequence of `\r\r`, `\r` or `\n`
+
+* Treat in-use cross-reference entries with a byte offset of 0 as free entries:
+
+  ~~~
+  xref
+  0 2
+  0000000000 65535 f 
+  0000000000 00000 n 
+  ~~~
+
+* Treat in-use cross-reference entries with a generation number greater than 65535 as free entries:
+
+  ~~~
+  xref
+  0 2
+  0000000000 65535 f 
+  0000000011 77777 n 
+  ~~~
+
+* Handle invalid numbering of the main cross-reference section by renumbering the entries.
+
+  There are PDFs out in the wild which create the main cross-reference section with wrong numbering while the rest of the PDF is fine.
+
+  The most often encountered problem is starting at 1 instead of 0:
+
+  ~~~
+  xref
+  1 5
+  0000000000 65535 f 
+  0000000011 00000 n 
+  0000000022 00000 n 
+  0000000033 00000 n 
+  0000000044 00000 n 
+  ~~~
+
+  In this case the object with oid=2 according to the cross-reference entry at position 11 is actually the object with oid=1 (and similar for the other objects). Whether this assumption is correct, should probably be checked by looking at the indirect object itself.
+
+* Maybe try reconstructing the cross-reference table for non-recoverable problems by locating the indirect objects in the file stream from the top downwards
+
+
+## 7.5.5 File Trailer
+
+* Allow the end-of-file marker to appear anywhere at the end, not just on the last line (recommended by Adobe):
+
+  ~~~
+  % ...rest...
+  startxref
+  12345
+  %%EOF
+
+  some junk here
+  and here
+  ~~~
+
+* Handle the `xref` offset being on the same line as the `startxref` keyword:
+
+  ~~~
+  % ...rest...
+  startxref 12345
+  %%EOF
+  ~~~
+
+
+## 7.5.8 Cross-Reference Streams
+
+* Add missing entry for cross-reference stream itself
+
