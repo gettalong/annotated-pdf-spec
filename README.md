@@ -12,7 +12,28 @@ Most of things stated here are needed because many PDF writers don't create stan
 [spec]: http://wwwimages.adobe.com/content/dam/Adobe/en/devnet/pdf/pdfs/PDF32000_2008.pdf
 [hp]: https://hexapdf.gettalong.org
 
+
 # Annotations
+
+## 7.3.3 Numeric Objects
+
+* Handle the invalid values `nan`, `-nan`, `inf` and `-inf` (in any form of upper/lower case) as 0:
+
+  ~~~
+  1 0 obj
+  NaN
+  endobj
+
+  2 0 obj
+  <</Key -inf>>
+  endobj
+  ~~~
+
+
+## 7.3.6 Array Objects
+
+* Handle `null` values, e.g. for page arrays or annotation arrays (null values can easily appear if an indirect object is deleted in an incremental revision)
+
 
 ## 7.3.8 Stream Objects
 
@@ -188,3 +209,9 @@ Most of things stated here are needed because many PDF writers don't create stan
 
 * Add missing entry for cross-reference stream itself
 
+
+## 8.10 Form XObjects
+
+* Handle Form XObjects missing required information correctly when used for e.g. appearance streams.
+
+  Sometimes Form XObjects have not been built correctly and are missing required information like `/Subtype`. If such information is missing, auto-conversion to the correct class type is not possible. However, when we know that something needs to be a Form XObject because, for example, it is set as appearance stream, we can check if the dictionary has the `/BBox` entry and an associated stream and then convert it to the correct class.
